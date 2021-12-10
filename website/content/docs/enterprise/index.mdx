@@ -8,21 +8,31 @@ description: >-
 
 # Consul Enterprise
 
-[Consul Enterprise](https://www.hashicorp.com/consul) features address the organizational complexities of collaboration, operations, scale and governance. It includes capabilities that improve failure resilience, read scalability, and managing access in accordance with organizational policies. It also adds support for application and service architectures across complex network topologies. If you have already purchased Consul Enterprise, please see the [licensing section](#licensing) below.
+[Consul Enterprise] features address the organizational complexities of
+collaboration, operations, scale and governance.
+It includes capabilities that improve failure resilience, read scalability,
+and managing access in accordance with organizational policies.
+It also adds support for application and service architectures across complex network topologies.
 
-Features include:
+To use Consul Enterprise features,
+[apply a purchased license](/docs/enterprise/license/overview)
+that grants access to the desired features to the Consul Enterprise binary.
+Available enterprise features per Consul variant and license include:
 
-- [Audit Logging](/docs/enterprise/audit-logging)
-- [Automated Backups](/docs/enterprise/backups)
-- [Automated Upgrades](/docs/enterprise/upgrades)
-- [Enhanced Read Scalability](/docs/enterprise/read-scale)
-- [Redundancy Zones](/docs/enterprise/redundancy)
-- [Advanced Federation for Complex Network Topologies](/docs/enterprise/federation)
-- [Network Segments](/docs/enterprise/network-segments)
-- [Namespaces](/docs/enterprise/namespaces)
-- [NIA with Terraform Enterprise](/docs/nia/enterprise)
-- [Sentinel](/docs/enterprise/sentinel)
-- [OIDC Auth Method](/docs/acl/auth-methods/oidc)
+| Feature                                                                           | [HashiCorp Cloud Platform (HCP) Consul]                   | [Consul Enterprise] | Legacy Consul Enterprise (module-based)           |
+| --------------------------------------------------------------------------------- | ------------------------------------------------------- | ----------------- | ------------------------------------------------- |
+| Consul servers as a managed service                                               | Yes                                                     | No (self-managed) | No (self-managed)                                 |
+| [Audit Logging](/docs/enterprise/audit-logging)                                   | Standard tier and above                                 | Yes               | With Governance and Policy module                 |
+| [Automated Backups](/docs/enterprise/backups)                                     | All tiers                                               | Yes               | Yes                                               |
+| [Automated Upgrades](/docs/enterprise/upgrades)                                   | All tiers                                               | Yes               | Yes                                               |
+| [Enhanced Read Scalability](/docs/enterprise/read-scale)                          |                                                         | Yes               | With Global Visibility, Routing, and Scale module |
+| [Redundancy Zones](/docs/enterprise/redundancy)                                   |                                                         | Yes               | With Global Visibility, Routing, and Scale module |
+| [Advanced Federation for Complex Network Topologies](/docs/enterprise/federation) |                                                         | Yes               | With Global Visibility, Routing, and Scale module |
+| [Network Segments](/docs/enterprise/network-segments)                             |                                                         | Yes               | With Global Visibility, Routing, and Scale module |
+| [Namespaces](/docs/enterprise/namespaces)                                         | Standard tier and above                                 | Yes               | With Governance and Policy module                 |
+| [NIA with Terraform Enterprise](/docs/nia/enterprise)                             |                                                         | Yes               | Yes                                               |
+| [Sentinel](/docs/enterprise/sentinel)                                             | All tiers                                               | Yes               | With Governance and Policy module                 |
+| [OIDC Auth Method](/docs/acl/auth-methods/oidc)                                   |                                                         | Yes               | Yes                                               |
 
-These features are part of [Consul
-Enterprise](https://www.hashicorp.com/consul).
+[HashiCorp Cloud Platform (HCP) Consul]: https://cloud.hashicorp.com/docs/consul
+[Consul Enterprise]: https://www.hashicorp.com/products/consul/
