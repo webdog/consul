@@ -508,6 +508,19 @@ func (s *HTTPHandlers) wrap(handler endpoint, methods []string) http.HandlerFunc
 		} else {
 			err = s.checkWriteAccess(req)
 
+			// Give the user a hint that they might be doing something wrong if their GET request
+			// has a non-empty body, which can easily happen using curl's --data-urlencode
+			// if specifying request type via "--request GET" rather than "--get".
+			// See https://github.com/hashicorp/consul/issues/11471.
+			if req.Method == http.MethodGet {
+				if req.ContentLength > 0 {
+					err = fmt.Errorf(
+						"Invalid GET request to %s: GET requests should have an empty body, "+
+							"check whether parameters were accidentally placed in the body rather than in the query string",
+						logURL)
+				}
+			}
+
 			if err == nil {
 				// Invoke the handler
 				obj, err = handler(resp, req)

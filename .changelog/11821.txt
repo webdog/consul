@@ -1,0 +1,3 @@
+```release-note:improvement
+http: return an error if a GET request has a non-empty body that suggests the possible problem (parameters should be in query string, not body)
+```
