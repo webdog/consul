@@ -65,7 +65,6 @@ func TestConnectCARoots_list(t *testing.T) {
 	// We should never have the secret information
 	for _, r := range value.Roots {
 		assertion.Equal("", r.SigningCert)
-		assertion.Equal("", r.SigningKey)
 	}
 }
 

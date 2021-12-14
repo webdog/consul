@@ -5737,7 +5737,6 @@ func TestAgentConnectCARoots_list(t *testing.T) {
 	// We should never have the secret information
 	for _, r := range value.Roots {
 		assert.Equal("", r.SigningCert)
-		assert.Equal("", r.SigningKey)
 	}
 
 	assert.Equal("MISS", resp.Header().Get("X-Cache"))

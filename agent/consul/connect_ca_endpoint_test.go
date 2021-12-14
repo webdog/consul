@@ -74,7 +74,6 @@ func TestConnectCARoots(t *testing.T) {
 	for _, r := range reply.Roots {
 		// These must never be set, for security
 		assert.Equal("", r.SigningCert)
-		assert.Equal("", r.SigningKey)
 	}
 	assert.Equal(fmt.Sprintf("%s.consul", caCfg.ClusterID), reply.TrustDomain)
 }
