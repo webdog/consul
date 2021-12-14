@@ -35,7 +35,7 @@ import (
 )
 
 const (
-	TestDefaultMasterToken = "d9f05e83-a7ae-47ce-839e-c0d53a68c00a"
+	TestDefaultInitialManagementToken = "d9f05e83-a7ae-47ce-839e-c0d53a68c00a"
 )
 
 // testTLSCertificates Generates a TLS CA and server key/cert and returns them
@@ -74,7 +74,7 @@ func testServerACLConfig(cb func(*Config)) func(*Config) {
 	return func(c *Config) {
 		c.PrimaryDatacenter = "dc1"
 		c.ACLsEnabled = true
-		c.ACLInitialManagementToken = TestDefaultMasterToken
+		c.ACLInitialManagementToken = TestDefaultInitialManagementToken
 		c.ACLResolverSettings.ACLDefaultPolicy = "deny"
 
 		if cb != nil {
@@ -262,7 +262,7 @@ func testACLServerWithConfig(t *testing.T, cb func(*Config), initReplicationToke
 
 	if initReplicationToken {
 		// setup some tokens here so we get less warnings in the logs
-		srv.tokens.UpdateReplicationToken(TestDefaultMasterToken, token.TokenSourceConfig)
+		srv.tokens.UpdateReplicationToken(TestDefaultInitialManagementToken, token.TokenSourceConfig)
 	}
 
 	codec := rpcClient(t, srv)
