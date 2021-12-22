@@ -8,8 +8,9 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 
-	"github.com/hashicorp/consul/agent/structs"
 	"github.com/stretchr/testify/require"
+
+	"github.com/hashicorp/consul/agent/structs"
 )
 
 type KeyConfig struct {
@@ -138,10 +139,8 @@ func TestSignatureMismatches(t *testing.T) {
 				continue
 			}
 			t.Run(fmt.Sprintf("TestMismatches-%s%d-%s%d", p1.keyType, p1.keyBits, p2.keyType, p2.keyBits), func(t *testing.T) {
-				ca := TestCAWithKeyType(t, nil, p1.keyType, p1.keyBits)
-				r.Equal(p1.keyType, ca.PrivateKeyType)
-				r.Equal(p1.keyBits, ca.PrivateKeyBits)
-				certPEM, keyPEM, err := testLeaf(t, "foobar.service.consul", "default", ca, p2.keyType, p2.keyBits)
+				ca := NewTestCA(t, TestCAOptions{KeyType: p1.keyType, KeyBits: p1.keyBits})
+				certPEM, keyPEM, err := testLeaf(t, "foobar.service.consul", "default", ca.KeyPair(), p2.keyType, p2.keyBits)
 				r.NoError(err)
 				_, err = ParseCert(certPEM)
 				r.NoError(err)

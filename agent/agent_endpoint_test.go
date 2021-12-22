@@ -5716,7 +5716,7 @@ func TestAgentConnectCARoots_list(t *testing.T) {
 
 	// Set some CAs. Note that NewTestAgent already bootstraps one CA so this just
 	// adds a second and makes it active.
-	ca2 := connect.TestCAConfigSet(t, a, nil)
+	ca2 := connect.TestCAConfigSet(t, a)
 
 	// List
 	req, _ := http.NewRequest("GET", "/v1/agent/connect/ca/roots", nil)
@@ -5759,7 +5759,7 @@ func TestAgentConnectCARoots_list(t *testing.T) {
 	// Test that caching is updated in the background
 	{
 		// Set a new CA
-		ca := connect.TestCAConfigSet(t, a, nil)
+		ca := connect.TestCAConfigSet(t, a)
 
 		retry.Run(t, func(r *retry.R) {
 			// List it again
@@ -5957,7 +5957,7 @@ func TestAgentConnectCALeafCert_good(t *testing.T) {
 
 	// CA already setup by default by NewTestAgent but force a new one so we can
 	// verify it was signed easily.
-	ca1 := connect.TestCAConfigSet(t, a, nil)
+	ca1 := connect.TestCAConfigSet(t, a)
 
 	{
 		// Register a local service
@@ -6011,7 +6011,7 @@ func TestAgentConnectCALeafCert_good(t *testing.T) {
 	}
 
 	// Set a new CA
-	ca2 := connect.TestCAConfigSet(t, a, nil)
+	ca2 := connect.TestCAConfigSet(t, a)
 
 	// Issue a blocking query to ensure that the cert gets updated appropriately
 	{
@@ -6047,7 +6047,7 @@ func TestAgentConnectCALeafCert_good(t *testing.T) {
 		// Issue a non blocking query to ensure that the cert gets updated appropriately
 		{
 			// Set a new CA
-			ca3 := connect.TestCAConfigSet(t, a, nil)
+			ca3 := connect.TestCAConfigSet(t, a)
 
 			resp := httptest.NewRecorder()
 			req, err := http.NewRequest("GET", "/v1/agent/connect/ca/leaf/test", nil)
@@ -6102,7 +6102,7 @@ func TestAgentConnectCALeafCert_goodNotLocal(t *testing.T) {
 
 	// CA already setup by default by NewTestAgent but force a new one so we can
 	// verify it was signed easily.
-	ca1 := connect.TestCAConfigSet(t, a, nil)
+	ca1 := connect.TestCAConfigSet(t, a)
 
 	{
 		// Register a non-local service (central catalog)
@@ -6175,7 +6175,7 @@ func TestAgentConnectCALeafCert_goodNotLocal(t *testing.T) {
 	// Test that caching is updated in the background
 	{
 		// Set a new CA
-		ca := connect.TestCAConfigSet(t, a, nil)
+		ca := connect.TestCAConfigSet(t, a)
 
 		retry.Run(t, func(r *retry.R) {
 			resp := httptest.NewRecorder()
@@ -6379,7 +6379,7 @@ func TestAgentConnectCALeafCert_secondaryDC_good(t *testing.T) {
 
 	// CA already setup by default by NewTestAgent but force a new one so we can
 	// verify it was signed easily.
-	dc1_ca1 := connect.TestCAConfigSet(t, a1, nil)
+	dc1_ca1 := connect.TestCAConfigSet(t, a1)
 
 	// Wait until root is updated in both dcs.
 	waitForActiveCARoot(t, a1.srv, dc1_ca1)
@@ -6476,7 +6476,7 @@ func TestAgentConnectCALeafCert_secondaryDC_good(t *testing.T) {
 	}
 
 	// Set a new CA
-	dc1_ca2 := connect.TestCAConfigSet(t, a2, nil)
+	dc1_ca2 := connect.TestCAConfigSet(t, a2)
 
 	// Wait until root is updated in both dcs.
 	waitForActiveCARoot(t, a1.srv, dc1_ca2)
