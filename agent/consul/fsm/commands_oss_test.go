@@ -1246,8 +1246,8 @@ func TestFSM_CARoots(t *testing.T) {
 	assert.Nil(err)
 
 	// Roots
-	ca1 := connect.TestCA(t, nil)
-	ca2 := connect.TestCA(t, nil)
+	ca1 := connect.TestCA(t, nil).ToCARoot()
+	ca2 := connect.TestCA(t, nil).ToCARoot()
 	ca2.Active = false
 
 	// Create a new request.
@@ -1256,11 +1256,14 @@ func TestFSM_CARoots(t *testing.T) {
 		Roots: []*structs.CARoot{ca1, ca2},
 	}
 
-	{
-		buf, err := structs.Encode(structs.ConnectCARequestType, req)
-		assert.Nil(err)
-		assert.True(fsm.Apply(makeLog(buf)).(bool))
+	buf, err := structs.Encode(structs.ConnectCARequestType, req)
+	assert.Nil(err)
+	result := fsm.Apply(makeLog(buf))
+	success, ok := result.(bool)
+	if !ok {
+		t.Fatalf("expected bool, got %T (%v)", result, result)
 	}
+	require.True(t, success)
 
 	// Verify it's in the state store.
 	{

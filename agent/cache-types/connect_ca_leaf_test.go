@@ -163,8 +163,8 @@ func TestConnectCALeaf_changingRoots(t *testing.T) {
 	typ, rootsCh := testCALeafType(t, rpc)
 	defer close(rootsCh)
 
-	caRoot := connect.TestCA(t, nil)
-	caRoot.Active = true
+	testCA := connect.TestCA(t, nil)
+	caRoot := testCA.ToCARoot()
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot.ID,
 		TrustDomain:  "fake-trust-domain.consul",
@@ -176,7 +176,8 @@ func TestConnectCALeaf_changingRoots(t *testing.T) {
 
 	// We need this later but needs to be defined so we sign second CSR with it
 	// otherwise we break the cert root checking.
-	caRoot2 := connect.TestCA(t, nil)
+	testCA2 := connect.TestCA(t, nil)
+	caRoot2 := testCA2.ToCARoot()
 
 	// Instrument ConnectCA.Sign to return signed cert
 	var resp *structs.IssuedCert
@@ -184,11 +185,11 @@ func TestConnectCALeaf_changingRoots(t *testing.T) {
 
 	rpc.On("RPC", "ConnectCA.Sign", mock.Anything, mock.Anything).Return(nil).
 		Run(func(args mock.Arguments) {
-			ca := caRoot
+			ca := testCA
 			cIdx := atomic.AddUint64(&idx, 1)
 			if cIdx > 1 {
 				// Second time round use the new CA
-				ca = caRoot2
+				ca = testCA2
 			}
 			reply := args.Get(2).(*structs.IssuedCert)
 			leaf, _ := connect.TestLeaf(t, "web", ca)
@@ -280,15 +281,13 @@ func TestConnectCALeaf_changingRootsJitterBetweenCalls(t *testing.T) {
 	// timeout in FetchOptions to be much shorter than this.
 	typ.TestOverrideCAChangeInitialDelay = 100 * time.Millisecond
 
-	caRoot := connect.TestCA(t, nil)
-	caRoot.Active = true
+	testCA := connect.TestCA(t, nil)
+	caRoot := testCA.ToCARoot()
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot.ID,
 		TrustDomain:  "fake-trust-domain.consul",
-		Roots: []*structs.CARoot{
-			caRoot,
-		},
-		QueryMeta: structs.QueryMeta{Index: 1},
+		Roots:        []*structs.CARoot{caRoot},
+		QueryMeta:    structs.QueryMeta{Index: 1},
 	}
 
 	// Instrument ConnectCA.Sign to return signed cert
@@ -297,7 +296,7 @@ func TestConnectCALeaf_changingRootsJitterBetweenCalls(t *testing.T) {
 	rpc.On("RPC", "ConnectCA.Sign", mock.Anything, mock.Anything).Return(nil).
 		Run(func(args mock.Arguments) {
 			reply := args.Get(2).(*structs.IssuedCert)
-			leaf, _ := connect.TestLeaf(t, "web", caRoot)
+			leaf, _ := connect.TestLeaf(t, "web", testCA)
 			reply.CertPEM = leaf
 			reply.ValidAfter = time.Now().Add(-1 * time.Hour)
 			reply.ValidBefore = time.Now().Add(11 * time.Hour)
@@ -338,8 +337,8 @@ func TestConnectCALeaf_changingRootsJitterBetweenCalls(t *testing.T) {
 	// needs to correctly notice that it is not the same one that generated the
 	// current cert and start the rotation. This is good, just not obvious that
 	// the behavior is actually well tested here when it is.
-	caRoot2 := connect.TestCA(t, nil)
-	caRoot2.Active = true
+	testCA2 := connect.TestCA(t, nil)
+	caRoot2 := testCA2.ToCARoot()
 	caRoot.Active = false
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot2.ID,
@@ -423,15 +422,13 @@ func TestConnectCALeaf_changingRootsBetweenBlockingCalls(t *testing.T) {
 	typ, rootsCh := testCALeafType(t, rpc)
 	defer close(rootsCh)
 
-	caRoot := connect.TestCA(t, nil)
-	caRoot.Active = true
+	testCA := connect.TestCA(t, nil)
+	caRoot := testCA.ToCARoot()
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot.ID,
 		TrustDomain:  "fake-trust-domain.consul",
-		Roots: []*structs.CARoot{
-			caRoot,
-		},
-		QueryMeta: structs.QueryMeta{Index: 1},
+		Roots:        []*structs.CARoot{caRoot},
+		QueryMeta:    structs.QueryMeta{Index: 1},
 	}
 
 	// Instrument ConnectCA.Sign to return signed cert
@@ -440,7 +437,7 @@ func TestConnectCALeaf_changingRootsBetweenBlockingCalls(t *testing.T) {
 	rpc.On("RPC", "ConnectCA.Sign", mock.Anything, mock.Anything).Return(nil).
 		Run(func(args mock.Arguments) {
 			reply := args.Get(2).(*structs.IssuedCert)
-			leaf, _ := connect.TestLeaf(t, "web", caRoot)
+			leaf, _ := connect.TestLeaf(t, "web", testCA)
 			reply.CertPEM = leaf
 			reply.ValidAfter = time.Now().Add(-1 * time.Hour)
 			reply.ValidBefore = time.Now().Add(11 * time.Hour)
@@ -485,8 +482,8 @@ func TestConnectCALeaf_changingRootsBetweenBlockingCalls(t *testing.T) {
 	}
 
 	// No active requests, simulate root change now
-	caRoot2 := connect.TestCA(t, nil)
-	caRoot2.Active = true
+	testCA2 := connect.TestCA(t, nil)
+	caRoot2 := testCA2.ToCARoot()
 	caRoot.Active = false
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot2.ID,
@@ -537,15 +534,13 @@ func TestConnectCALeaf_CSRRateLimiting(t *testing.T) {
 	typ.TestOverrideCAChangeInitialDelay = 100 * time.Millisecond
 
 	// Setup root that will be returned by the mocked Root cache fetch
-	caRoot := connect.TestCA(t, nil)
-	caRoot.Active = true
+	testCA := connect.TestCA(t, nil)
+	caRoot := testCA.ToCARoot()
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot.ID,
 		TrustDomain:  "fake-trust-domain.consul",
-		Roots: []*structs.CARoot{
-			caRoot,
-		},
-		QueryMeta: structs.QueryMeta{Index: 1},
+		Roots:        []*structs.CARoot{caRoot},
+		QueryMeta:    structs.QueryMeta{Index: 1},
 	}
 
 	// Instrument ConnectCA.Sign
@@ -554,7 +549,7 @@ func TestConnectCALeaf_CSRRateLimiting(t *testing.T) {
 
 	genCert := func(args mock.Arguments) {
 		reply := args.Get(2).(*structs.IssuedCert)
-		leaf, _ := connect.TestLeaf(t, "web", caRoot)
+		leaf, _ := connect.TestLeaf(t, "web", testCA)
 		reply.CertPEM = leaf
 		reply.ValidAfter = time.Now().Add(-1 * time.Hour)
 		reply.ValidBefore = time.Now().Add(11 * time.Hour)
@@ -618,8 +613,8 @@ func TestConnectCALeaf_CSRRateLimiting(t *testing.T) {
 
 	// Send in new roots, which should trigger the next sign req. We need to take
 	// care to set the new root as active
-	caRoot2 := connect.TestCA(t, nil)
-	caRoot2.Active = true
+	testCA2 := connect.TestCA(t, nil)
+	caRoot2 := testCA2.ToCARoot()
 	caRoot.Active = false
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot2.ID,
@@ -719,15 +714,13 @@ func TestConnectCALeaf_watchRootsDedupingMultipleCallers(t *testing.T) {
 	typ, rootsCh := testCALeafType(t, rpc)
 	defer close(rootsCh)
 
-	caRoot := connect.TestCA(t, nil)
-	caRoot.Active = true
+	testCA := connect.TestCA(t, nil)
+	caRoot := testCA.ToCARoot()
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot.ID,
 		TrustDomain:  "fake-trust-domain.consul",
-		Roots: []*structs.CARoot{
-			caRoot,
-		},
-		QueryMeta: structs.QueryMeta{Index: 1},
+		Roots:        []*structs.CARoot{caRoot},
+		QueryMeta:    structs.QueryMeta{Index: 1},
 	}
 
 	// Instrument ConnectCA.Sign to return signed cert
@@ -739,7 +732,7 @@ func TestConnectCALeaf_watchRootsDedupingMultipleCallers(t *testing.T) {
 			// otherwise we have to re-invent whole CSR endpoint here to be able to
 			// control things - parse PEM sign with right key etc. It doesn't matter -
 			// we use the CreateIndex to differentiate the "right" results.
-			leaf, _ := connect.TestLeaf(t, "web", caRoot)
+			leaf, _ := connect.TestLeaf(t, "web", testCA)
 			reply.CertPEM = leaf
 			reply.ValidAfter = time.Now().Add(-1 * time.Hour)
 			reply.ValidBefore = time.Now().Add(11 * time.Hour)
@@ -843,8 +836,8 @@ func TestConnectCALeaf_watchRootsDedupingMultipleCallers(t *testing.T) {
 	assertRootsWatchCounts(t, typ, 1, 0)
 
 	// Now we deliver the root update
-	caRoot2 := connect.TestCA(t, nil)
-	caRoot2.Active = true
+	testCA2 := connect.TestCA(t, nil)
+	caRoot2 := testCA2.ToCARoot()
 	caRoot.Active = false
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot2.ID,
@@ -916,15 +909,13 @@ func TestConnectCALeaf_expiringLeaf(t *testing.T) {
 	typ, rootsCh := testCALeafType(t, rpc)
 	defer close(rootsCh)
 
-	caRoot := connect.TestCA(t, nil)
-	caRoot.Active = true
+	testCA := connect.TestCA(t, nil)
+	caRoot := testCA.ToCARoot()
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot.ID,
 		TrustDomain:  "fake-trust-domain.consul",
-		Roots: []*structs.CARoot{
-			caRoot,
-		},
-		QueryMeta: structs.QueryMeta{Index: 1},
+		Roots:        []*structs.CARoot{caRoot},
+		QueryMeta:    structs.QueryMeta{Index: 1},
 	}
 
 	// Instrument ConnectCA.Sign to
@@ -936,7 +927,7 @@ func TestConnectCALeaf_expiringLeaf(t *testing.T) {
 			reply.CreateIndex = atomic.AddUint64(&idx, 1)
 			reply.ModifyIndex = reply.CreateIndex
 
-			leaf, _ := connect.TestLeaf(t, "web", caRoot)
+			leaf, _ := connect.TestLeaf(t, "web", testCA)
 			reply.CertPEM = leaf
 
 			if reply.CreateIndex == 1 {
@@ -1011,15 +1002,13 @@ func TestConnectCALeaf_DNSSANForService(t *testing.T) {
 	typ, rootsCh := testCALeafType(t, rpc)
 	defer close(rootsCh)
 
-	caRoot := connect.TestCA(t, nil)
-	caRoot.Active = true
+	testCA := connect.TestCA(t, nil)
+	caRoot := testCA.ToCARoot()
 	rootsCh <- structs.IndexedCARoots{
 		ActiveRootID: caRoot.ID,
 		TrustDomain:  "fake-trust-domain.consul",
-		Roots: []*structs.CARoot{
-			caRoot,
-		},
-		QueryMeta: structs.QueryMeta{Index: 1},
+		Roots:        []*structs.CARoot{caRoot},
+		QueryMeta:    structs.QueryMeta{Index: 1},
 	}
 
 	// Instrument ConnectCA.Sign to
@@ -1027,7 +1016,7 @@ func TestConnectCALeaf_DNSSANForService(t *testing.T) {
 	rpc.On("RPC", "ConnectCA.Sign", mock.Anything, mock.Anything).Return(nil).
 		Run(func(args mock.Arguments) {
 			reply := args.Get(2).(*structs.IssuedCert)
-			leaf, _ := connect.TestLeaf(t, "web", caRoot)
+			leaf, _ := connect.TestLeaf(t, "web", testCA)
 			reply.CertPEM = leaf
 
 			caReq = args.Get(1).(*structs.CASignRequest)
