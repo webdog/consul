@@ -415,7 +415,7 @@ func (v *VaultProvider) SetIntermediate(intermediatePEM, rootPEM string) error {
 	}
 
 	_, err = v.client.Logical().Write(v.config.IntermediatePKIPath+"intermediate/set-signed", map[string]interface{}{
-		"certificate": fmt.Sprintf("%s\n%s", intermediatePEM, rootPEM),
+		"certificate": intermediatePEM,
 	})
 	if err != nil {
 		return err

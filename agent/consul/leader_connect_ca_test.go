@@ -83,7 +83,6 @@ func TestCAManager_Initialize_Vault_Secondary_SharedVault(t *testing.T) {
 				},
 			}
 		})
-		defer serverDC2.Shutdown()
 		joinWAN(t, serverDC2, serverDC1)
 		testrpc.WaitForActiveCARoot(t, serverDC2.RPC, "dc2", nil)
 
@@ -637,9 +636,9 @@ func TestCAManager_Initialize_Vault_WithExternalTrustedCA(t *testing.T) {
 	rootPEM := generateExternalRootCA(t, vclient)
 
 	primaryCAPath := "pki-primary"
-	setupPrimaryCA(t, vclient, primaryCAPath, rootPEM)
+	primaryPEM := setupPrimaryCA(t, vclient, primaryCAPath, rootPEM)
 
-	_, s1 := testServerWithConfig(t, func(c *Config) {
+	_, serverDC1 := testServerWithConfig(t, func(c *Config) {
 		c.CAConfig = &structs.CAConfiguration{
 			Provider: "vault",
 			Config: map[string]interface{}{
@@ -654,18 +653,47 @@ func TestCAManager_Initialize_Vault_WithExternalTrustedCA(t *testing.T) {
 			},
 		}
 	})
-	testrpc.WaitForTestAgent(t, s1.RPC, "dc1")
+	testrpc.WaitForTestAgent(t, serverDC1.RPC, "dc1")
 
-	codec := rpcClient(t, s1)
-	roots := structs.IndexedCARoots{}
-	err := msgpackrpc.CallWithCodec(codec, "ConnectCA.Roots", &structs.DCSpecificRequest{}, &roots)
-	require.NoError(t, err)
-	require.Len(t, roots.Roots, 1)
-	require.Equal(t, rootPEM, roots.Roots[0].RootCert)
-	require.Len(t, roots.Roots[0].IntermediateCerts, 2)
+	runStep(t, "verify primary DC", func(t *testing.T) {
+		codec := rpcClient(t, serverDC1)
+		roots := structs.IndexedCARoots{}
+		err := msgpackrpc.CallWithCodec(codec, "ConnectCA.Roots", &structs.DCSpecificRequest{}, &roots)
+		require.NoError(t, err)
+		require.Len(t, roots.Roots, 1)
+		require.Equal(t, primaryPEM, roots.Roots[0].RootCert)
+		require.Len(t, roots.Roots[0].IntermediateCerts, 1)
 
-	leafCert := getLeafCert(t, codec, roots.TrustDomain, "dc1")
-	verifyLeafCert(t, roots.Active(), leafCert)
+		leafCert := getLeafCert(t, codec, roots.TrustDomain, "dc1")
+		verifyLeafCert(t, roots.Active(), leafCert)
+	})
+
+	runStep(t, "start secondary DC", func(t *testing.T) {
+		_, serverDC2 := testServerWithConfig(t, func(c *Config) {
+			c.Datacenter = "dc2"
+			c.PrimaryDatacenter = "dc1"
+			c.CAConfig = &structs.CAConfiguration{
+				Provider: "vault",
+				Config: map[string]interface{}{
+					"Address":             vault.Addr,
+					"Token":               vault.RootToken,
+					"RootPKIPath":         "should-be-ignored",
+					"IntermediatePKIPath": "pki-secondary/",
+				},
+			}
+		})
+		joinWAN(t, serverDC2, serverDC1)
+		testrpc.WaitForActiveCARoot(t, serverDC2.RPC, "dc2", nil)
+
+		codec := rpcClient(t, serverDC2)
+		roots := structs.IndexedCARoots{}
+		err := msgpackrpc.CallWithCodec(codec, "ConnectCA.Roots", &structs.DCSpecificRequest{}, &roots)
+		require.NoError(t, err)
+		require.Len(t, roots.Roots, 1)
+
+		leafPEM := getLeafCert(t, codec, roots.TrustDomain, "dc2")
+		verifyLeafCert(t, roots.Roots[0], leafPEM)
+	})
 }
 
 func generateExternalRootCA(t *testing.T, client *vaultapi.Client) string {
