@@ -409,11 +409,7 @@ func (v *VaultProvider) SetIntermediate(intermediatePEM, rootPEM string) error {
 		return fmt.Errorf("cannot set an intermediate using another root in the primary datacenter")
 	}
 
-	err := validateSetIntermediate(
-		intermediatePEM, rootPEM,
-		"", // we don't have access to the private key directly
-		v.spiffeID,
-	)
+	err := validateSetIntermediate(intermediatePEM, rootPEM, v.spiffeID)
 	if err != nil {
 		return err
 	}
