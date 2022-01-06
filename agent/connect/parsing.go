@@ -56,6 +56,21 @@ func ParseLeafCerts(pemValue string) (*x509.Certificate, *x509.CertPool, error) 
 	return leaf, intermediates, nil
 }
 
+// CertSubjects can be used in debugging to return the subject of each
+// certificate in the PEM bundle. Each subject is separated by a newline.
+func CertSubjects(pem string) string {
+	certs, err := parseCerts(pem)
+	if err != nil {
+		return err.Error()
+	}
+	var buf strings.Builder
+	for _, cert := range certs {
+		buf.WriteString(cert.Subject.String())
+		buf.WriteString("\n")
+	}
+	return buf.String()
+}
+
 // ParseCerts parses the all x509 certificates from a PEM-encoded value.
 // The first returned cert is a leaf cert and any other ones are intermediates.
 //

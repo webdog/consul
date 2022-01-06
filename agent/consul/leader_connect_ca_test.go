@@ -688,7 +688,7 @@ func generateExternalRootCA(t *testing.T, client *vaultapi.Client) string {
 	return ca.EnsureTrailingNewline(resp.Data["certificate"].(string))
 }
 
-func setupPrimaryCA(t *testing.T, client *vaultapi.Client, path string, rootPEM string) {
+func setupPrimaryCA(t *testing.T, client *vaultapi.Client, path string, rootPEM string) string {
 	t.Helper()
 	err := client.Sys().Mount(path, &vaultapi.MountInput{
 		Type:        "pki",
@@ -724,4 +724,5 @@ func setupPrimaryCA(t *testing.T, client *vaultapi.Client, path string, rootPEM 
 		"certificate": buf.String(),
 	})
 	require.NoError(t, err, "failed to set signed intermediate")
+	return buf.String()
 }

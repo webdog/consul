@@ -3,7 +3,6 @@ package consul
 import (
 	"context"
 	"crypto/x509"
-	"encoding/pem"
 	"errors"
 	"fmt"
 	"net/url"
@@ -256,27 +255,13 @@ func (c *CAManager) initializeCAConfig() (*structs.CAConfiguration, error) {
 
 // newCARoot returns a filled-in structs.CARoot from a raw PEM value.
 func newCARoot(pemValue, provider, clusterID string) (*structs.CARoot, error) {
-	certs, err := splitCerts(pemValue)
+	primaryCert, err := connect.ParseCert(pemValue)
 	if err != nil {
 		return nil, err
 	}
-	if len(certs) == 0 {
-		return nil, fmt.Errorf("no certificates in root PEM")
-	}
-	primaryCertRaw := certs[0]
-
-	rootPEM, err := connect.PEMEncode(certs[len(certs)-1], "CERTIFICATE")
-	if err != nil {
-		return nil, err
-	}
-
-	id, err := connect.CalculateCertFingerprint(primaryCertRaw)
+	id, err := connect.CalculateCertFingerprint(primaryCert.Raw)
 	if err != nil {
 		return nil, fmt.Errorf("error parsing root fingerprint: %v", err)
-	}
-	primaryCert, err := x509.ParseCertificate(primaryCertRaw)
-	if err != nil {
-		return nil, fmt.Errorf("error parsing root cert: %v", err)
 	}
 	keyType, keyBits, err := connect.KeyInfoFromCert(primaryCert)
 	if err != nil {
@@ -290,38 +275,12 @@ func newCARoot(pemValue, provider, clusterID string) (*structs.CARoot, error) {
 		ExternalTrustDomain: clusterID,
 		NotBefore:           primaryCert.NotBefore,
 		NotAfter:            primaryCert.NotAfter,
-		RootCert:            rootPEM,
+		RootCert:            pemValue,
 		PrivateKeyType:      keyType,
 		PrivateKeyBits:      keyBits,
 		Active:              true,
 	}
-
-	for i := 0; i < len(certs)-1; i++ {
-		pem, err := connect.PEMEncode(certs[i], "CERTIFICATE")
-		if err != nil {
-			return nil, fmt.Errorf("failed to re-encode cert %v: %w", i, err)
-		}
-		caRoot.IntermediateCerts = append(caRoot.IntermediateCerts, pem)
-	}
 	return caRoot, nil
-}
-
-func splitCerts(pemValue string) ([][]byte, error) {
-	var result [][]byte
-	rest := []byte(pemValue)
-	for {
-		block, remaining := pem.Decode(rest)
-		// TODO: should it be an error to have anything left in remaining?
-		if block == nil {
-			return result, nil
-		}
-		rest = remaining
-
-		if block.Type != "CERTIFICATE" {
-			return nil, fmt.Errorf("PEM-block should be CERTIFICATE type")
-		}
-		result = append(result, block.Bytes)
-	}
 }
 
 // getCAProvider returns the currently active instance of the CA Provider,
