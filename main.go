@@ -2,9 +2,12 @@ package main
 
 import (
 	"fmt"
+	"github.com/mitchellh/go-homedir"
 	"io/ioutil"
 	"log"
 	"os"
+	"path/filepath"
+	"syscall"
 
 	mcli "github.com/mitchellh/cli"
 
@@ -43,6 +46,29 @@ func realMain() int {
 		HelpFunc:     mcli.FilteredHelpFunc(names, mcli.BasicHelpFunc("consul")),
 		HelpWriter:   os.Stdout,
 		ErrorWriter:  os.Stderr,
+		MissingCommandFunc: func(command string, args []string) (bool, error) {
+			if len(args) == 0 {
+				return false, nil
+			}
+
+			home, err := homedir.Dir()
+			if err != nil {
+				return false, err
+			}
+
+			pluginPath := filepath.Join(home, ".consul", "plugins", fmt.Sprintf("consul-%s", args[0]))
+			_, err = os.Stat(pluginPath)
+			if err != nil {
+				return false, err
+			}
+
+			env := os.Environ()
+			execErr := syscall.Exec(pluginPath, args[1:], env)
+			if execErr != nil {
+				return false, err
+			}
+			return true, nil
+		},
 	}
 
 	if cli.IsVersion() {

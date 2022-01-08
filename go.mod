@@ -4,6 +4,8 @@ go 1.13
 
 replace github.com/hashicorp/consul/api => ./api
 
+replace github.com/mitchellh/cli => ../../lkysow/cli
+
 replace github.com/hashicorp/consul/sdk => ./sdk
 
 replace launchpad.net/gocheck => github.com/go-check/check v0.0.0-20140225173054-eb6ee6f84d0a
@@ -67,7 +69,7 @@ require (
 	github.com/miekg/dns v1.1.41
 	github.com/mitchellh/cli v1.1.0
 	github.com/mitchellh/copystructure v1.0.0
-	github.com/mitchellh/go-homedir v1.1.0 // indirect
+	github.com/mitchellh/go-homedir v1.1.0
 	github.com/mitchellh/go-testing-interface v1.14.0
 	github.com/mitchellh/hashstructure v0.0.0-20170609045927-2bca23e0e452
 	github.com/mitchellh/mapstructure v1.4.1-0.20210112042008-8ebf2d61a8b4
