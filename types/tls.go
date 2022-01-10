@@ -58,7 +58,7 @@ var (
 )
 
 func (v *TLSVersion) String() string {
-	return fmt.Sprintf("%s", *v)
+	return string(*v)
 }
 
 func ValidateTLSVersion(v TLSVersion) error {
